@@ -14,27 +14,33 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var keyEditText: EditText
+    private lateinit var keyEditText1: EditText
+    private lateinit var keyEditText2: EditText
     private lateinit var saveButton: Button
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        keyEditText = findViewById(R.id.keyEditText)
+        keyEditText1 = findViewById(R.id.keyEditText1)
+        keyEditText2 = findViewById(R.id.keyEditText2)
         saveButton = findViewById(R.id.saveButton)
         sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
-        val savedKey = sharedPreferences.getString("key", "")
-        keyEditText.setText(savedKey)
+        val savedKey1 = sharedPreferences.getString("key1", "")
+        val savedKey2 = sharedPreferences.getString("key2", "")
+        keyEditText1.setText(savedKey1)
+        keyEditText2.setText(savedKey2)
 
         saveButton.setOnClickListener {
-            val key = keyEditText.text.toString()
+            val key1 = keyEditText1.text.toString()
+            val key2 = keyEditText2.text.toString()
             with(sharedPreferences.edit()) {
-                putString("key", key)
+                putString("key1", key1)
+                putString("key2", key2)
                 apply()
             }
         }

@@ -13,10 +13,17 @@
         android:src="@drawable/fufu" />
 
     <EditText
-        android:id="@+id/keyEditText"
+        android:id="@+id/keyEditText1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter Key"
+        android:hint="Enter Key 1"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/keyEditText2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Key 2"
         android:layout_marginTop="16dp" />
 
     <Button

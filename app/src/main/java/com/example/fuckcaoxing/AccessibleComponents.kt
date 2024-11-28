@@ -8,12 +8,6 @@ import android.view.accessibility.AccessibilityNodeInfo
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.*
 
-data class SearchResult(
-    @SerializedName("scores") val scores: Double,
-    @SerializedName("question") val question: String,
-    @SerializedName("answer") val answer: String
-)
-
 class AccessibleComponents : AccessibilityService() {
     private var lastPageIdentifier: String? = null
     private var problemList: MutableList<String> = ArrayList()
@@ -35,7 +29,7 @@ class AccessibleComponents : AccessibilityService() {
                 traverseNode(rootNode)
                 Log.d("AccessibilityService", "Problem List: $problemList")
                 withContext(Dispatchers.IO) {
-                    MainService.getAnswer(problemList.toString(), this@AccessibleComponents)
+                    MainService.getans(problemList.toString(), this@AccessibleComponents)
                 }
                 problemList.clear() // clear problem list
             } else {
@@ -62,7 +56,7 @@ class AccessibleComponents : AccessibilityService() {
         if (!text.isNullOrEmpty()) {
             Log.d("AccessibilityService", "Text Found: $text")
             val elementsToRemove = listOf(
-                "当前第", "下一题", "上一题", "离开考试", "继续考试", "下拉可以刷新", "已经是最后一题了", "下一步", "上一步",
+                "当前第", "下一题", "上一题", "离开考试", "继续考试", "下拉可以刷新", "已经是最后一题了", "下一步", "上一步", "交卷"
             )
             if (!elementsToRemove.any { element ->
                     text.contains(element) ||
