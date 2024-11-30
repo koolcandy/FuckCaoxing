@@ -1,207 +1,141 @@
 package com.example.fuckcaoxing
 
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 
-// 数据模型
-data class SearchResult(
-    val scores: Double,
-    val question: String,
-    val answer: String
-)
-
-data class Part(
-    val text: String // 修改为 String 类型
-)
-
-data class Content(
-    val parts: List<Part>,
-    val role: String
-)
-
-data class Candidate(
-    val content: Content,
-    val finishReason: String,
-    val avgLogprobs: Double
-)
-
-data class UsageMetadata(
-    val promptTokenCount: Int,
-    val candidatesTokenCount: Int,
-    val totalTokenCount: Int
-)
-
+data class Answer(val choice: List<String>, val answer: List<String>)
+data class Message(val role: String, val content: String)
+data class Choice(val finish_reason: String, val message: Message)
+data class Output(val text: String?, val finish_reason: String?, val choices: List<Choice>)
 data class ApiResponse(
-    val candidates: List<Candidate>,
-    val usageMetadata: UsageMetadata,
-    val modelVersion: String
-)
-
-data class Text(
-    val answer: String,
-    val isrelated: Boolean
+    val status_code: Int,
+    val request_id: String,
+    val code: String,
+    val message: String,
+    val output: Output,
+    val usage: JsonObject
 )
 
 class MainService {
     companion object {
+        private const val TAG = "MainService"
+        private const val API_URL =
+            "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
 
-        suspend fun getans(problemList: String, context: Context) {
-            val answer = getAnswerByApi(problemList, context).replace("\n", "").replace(" ", "")
-            val sortingBuilder = """problem:{{{${problemList}}}}reference:{{${answer}}},just give me answer,not the choice"""
-            val geminiAnswer = askGemini(sortingBuilder, context)
-            Log.d("MainService", "Gemini Answer: $geminiAnswer")
-            val intent = Intent(context, FloatingWindowService::class.java)
-            intent.putExtra("newText", geminiAnswer)
-            context.startService(intent)
-            Log.d("MainService", "Service started with newText: $geminiAnswer")
+        fun getAnswer(problem: String, content: Context): Answer {
+            val client = OkHttpClient.Builder().build()
 
-            delay(2000)
+            val systemPrompt =
+                """
+            Give me answer about《毛泽东思想和中国特色社会主义理论体系概论》. 
+            Please parse the "choice" and "answer" and output them in JSON format.
 
-            val clearIntent = Intent(context, FloatingWindowService::class.java)
-            clearIntent.putExtra("newText", "")
-            context.startService(clearIntent)
-            Log.d("MainService", "Service started to clear newText")
-        }
-
-        private suspend fun getAnswerByApi(question: String, context: Context): String {
-            return withContext(Dispatchers.IO) {
-                var response: String? = null
-                val url = "http://so.studypro.club/api/search"
-                val key = getSavedKey(context, 1)
-                val gson = Gson()
-                val payload = gson.toJson(mapOf("question" to question, "phone" to key))
-                val headers = mapOf("Content-Type" to "application/x-www-form-urlencoded")
-
-                try {
-                    val urlObj = URL(url)
-                    val connection = urlObj.openConnection() as HttpURLConnection
-                    connection.requestMethod = "POST"
-                    headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
-                    connection.doOutput = true
-
-                    val writer = OutputStreamWriter(connection.outputStream)
-                    writer.write(payload)
-                    writer.flush()
-                    writer.close()
-
-                    val responseCode = connection.responseCode
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        response = connection.inputStream.bufferedReader().use { it.readText() }
-                        Log.d("MainService", "Response: $response")
-                    } else {
-                        Log.d("MainService", "Error: ${connection.responseMessage}")
-                    }
-                } catch (e: Exception) {
-                    Log.d("MainService", "Error: ${e.message}")
-                }
-
-                val type = object : TypeToken<List<SearchResult>>() {}.type
-                val searchResults: List<SearchResult> = gson.fromJson(response, type)
-
-                val resultString = buildString {
-                    searchResults.forEach { result ->
-                        append("Question: ${result.question.replace("\n", "")}\nAnswer: ${result.answer.replace("\n", "")}\n\n")
-                    }
-                }
-
-                Log.d("MainService", "Search Results: $resultString")
-                return@withContext resultString
+            EXAMPLE INPUT: 
+            
+            1.新中国初期建立社会主义国营经济的主要途径是()
+            A, 没收帝国主义在华企业
+            B, 剥地主阶级的财产
+            C, 赎买民族资产阶级的财产
+            D, 没收官僚资本
+            
+            EXAMPLE JSON OUTPUT:
+            {
+                "choice": ["D"],
+                "answer": ["没收官僚资本"]
             }
-        }
+            
+            EXAMPLE INPUT: 
+            
+            1.共享是中国特色社会主义的本质要求。其内涵主要包括()
+            A、全民共享
+            B、全面共享
+            C、共建共享
+            D、渐进共享
+            
+            EXAMPLE JSON OUTPUT:
+            {
+                'choice': ["A", "B", "C", "D"],
+                "answer": ["全民共享", "全面共享", "共建共享", "渐进共享"]
+            }
+                """.trimIndent()
 
-        private suspend fun askGemini(inputText: String, context: Context): String {
-            val apiKey = getSavedKey(context, 2)
-            val urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey"
-            val gson = Gson()
-
-            val requestBody = mapOf(
-                "contents" to listOf(
-                    mapOf(
-                        "role" to "user",
-                        "parts" to listOf(mapOf("text" to inputText))
-                    )
-                ),
-                "generationConfig" to mapOf(
-                    "temperature" to 1,
-                    "topK" to 40,
-                    "topP" to 0.95,
-                    "maxOutputTokens" to 8192,
-                    "responseMimeType" to "application/json",
-                    "responseSchema" to mapOf(
-                        "type" to "object",
-                        "properties" to mapOf(
-                            "answer" to mapOf("type" to "string"),
-                            "isrelated" to mapOf("type" to "boolean")
-                        ),
-                        "required" to listOf("answer", "isrelated")
-                    )
-                )
+            val messages = listOf(
+                mapOf("role" to "system", "content" to systemPrompt),
+                mapOf("role" to "user", "content" to problem)
             )
 
-            val jsonRequestBody = gson.toJson(requestBody)
+            val parameters = mapOf(
+                "model" to "qwen-plus",
+                "messages" to messages,
+                "result_format" to "message",
+                "top_p" to 0.8,
+                "temperature" to 0.7,
+                "enable_search" to true,
+                "response_format" to mapOf("type" to "json_object")
+            )
 
-            Log.d("API_REQUEST", "Request: $jsonRequestBody")
+            val gson = Gson()
+            val messagesJson = gson.toJson(messages)
+            val parametersJson = gson.toJson(parameters)
 
-            return withContext(Dispatchers.IO) {
-                var response: String? = null
-                var connection: HttpURLConnection? = null
-                try {
-                    val url = URL(urlString)
-                    connection = url.openConnection() as HttpURLConnection
-                    connection.requestMethod = "POST"
-                    connection.setRequestProperty("Content-Type", "application/json")
-                    connection.doOutput = true
-
-                    OutputStreamWriter(connection.outputStream).use { writer ->
-                        writer.write(jsonRequestBody)
-                        writer.flush()
-                    }
-
-                    if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                        connection.inputStream.bufferedReader().use { reader ->
-                            response = reader.readText()
-                            Log.d("API_REQUEST", "Response: $response")
-                        }
-                    } else {
-                        Log.e("API_REQUEST", "请求失败，响应码：${connection.responseCode}")
-                    }
-                } catch (e: Exception) {
-                    Log.e("API_REQUEST", "请求异常：${e.message}", e)
-                } finally {
-                    connection?.disconnect()
-                }
-
-                val type1 = object : TypeToken<ApiResponse>() {}.type
-                val apiResponse: ApiResponse = Gson().fromJson(response, type1)
-                val rawText = apiResponse.candidates[0].content.parts[0].text
-
-                // 解析嵌套的 JSON
-                val parsedText = Gson().fromJson(rawText, Text::class.java)
-                val answer = parsedText.answer
-                val isrelated = parsedText.isrelated
-
-                if (isrelated) {
-                    return@withContext answer
-                } else {
-                    return@withContext ""
+            val mediaType = "application/json".toMediaType()
+            val body = """
+                {
+                    "model": "qwen-plus",
+                    "input":{
+                        "messages": $messagesJson
+                    },
+                    "parameters": $parametersJson
                 }
             }
+            """.trimIndent().toRequestBody(mediaType)
+
+            val API_KEY = getSavedKey(content)
+
+            val request = Request.Builder()
+                .url(API_URL)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Accept", "application/json")
+                .addHeader("Authorization", "Bearer $API_KEY")
+                .build()
+
+            try {
+                val response = client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    if (responseBody != null) {
+                        val apiResponse = gson.fromJson(responseBody, ApiResponse::class.java)
+                        val answerContent = apiResponse.output.choices[0].message.content
+                        val parsedContent = JsonParser.parseString(answerContent).asJsonObject
+
+                        val choice = parsedContent.getAsJsonArray("choice").map { it.asString }
+                        val answer = parsedContent.getAsJsonArray("answer").map { it.asString }
+
+                        return Answer(choice, answer)
+                    } else {
+                        Log.e(TAG, "Response body is null")
+                    }
+                } else {
+                    Log.e(TAG, "HTTP request failed with status: ${response.code}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during API call: ${e.message}", e)
+            }
+
+            return Answer(emptyList(), emptyList())
         }
 
-        private fun getSavedKey(context: Context, key: Int): String? {
+        private fun getSavedKey(context: Context): String? {
             val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-            val key1 = sharedPreferences.getString("key1", null)
-            val key2 = sharedPreferences.getString("key2", null)
-            return if (key == 1) key1 else key2
+            return sharedPreferences.getString("key", null)
         }
     }
 }

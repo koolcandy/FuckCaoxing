@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">Fuck Caoxing</string>
-    <string name="accessibility_service_description">Fuck Caoxing</string>
+    <string name="app_name">Fuck Chaoxing</string>
+    <string name="accessibility_service_description">Fuck Chaoxing</string>
+    <string name="enter_key">Enter Key</string>
+    <string name="save">Save</string>
+    <string name="fufu">fufu</string>
 </resources>

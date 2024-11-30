@@ -1,23 +1,23 @@
 [versions]
-agp = "8.7.1"
-easyfloat = "2.0.4"
+agp = "8.7.2"
+fuel = "2.3.1"
 gson = "2.10.1"
 kotlin = "2.0.0"
-coreKtx = "1.13.1"
+coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 kotlinxCoroutinesAndroid = "1.7.3"
 kotlinxCoroutinesCore = "1.6.4"
-lifecycleRuntimeKtx = "2.8.6"
+lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
-composeBom = "2024.04.01"
+composeBom = "2024.11.00"
 appcompat = "1.7.0"
 okhttp = "4.9.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-easyfloat = { module = "com.github.princekin-f:EasyFloat", version.ref = "easyfloat" }
+fuel = { module = "com.github.kittinunf.fuel:fuel", version.ref = "fuel" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

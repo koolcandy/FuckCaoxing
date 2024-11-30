@@ -1,35 +1,35 @@
 <!-- res/layout/activity_main.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:gravity="center">
+    android:gravity="center"
+    tools:ignore="ExtraText">
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="500dp"
+        android:layout_height="550dp"
+        android:contentDescription="@string/fufu"
         android:src="@drawable/fufu" />
 
     <EditText
         android:id="@+id/keyEditText1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter Key 1"
-        android:layout_marginTop="16dp" />
-
-    <EditText
-        android:id="@+id/keyEditText2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Key 2"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        android:autofillHints="key"
+        android:hint="@string/enter_key"
+        android:inputType="text"
+        android:minHeight="48dp" />
+    android:minHeight="48dp" />
 
     <Button
         android:id="@+id/saveButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save"
+        android:text="@string/save"
         android:layout_marginTop="16dp" />
 </LinearLayout>
