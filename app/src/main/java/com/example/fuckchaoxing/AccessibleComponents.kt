@@ -83,7 +83,7 @@ class AccessibleComponents : AccessibilityService() {
                             (width / 6).toFloat(),
                             (height - 100).toFloat()
                         )
-                        delay(3000)
+                        delay(1500)
                         clickAtCoordinates(
                             this@AccessibleComponents,
                             (2 * width / 3).toFloat(),
@@ -156,7 +156,7 @@ class AccessibleComponents : AccessibilityService() {
     }
 
     private fun clickAtCoordinates(accessibilityService: AccessibilityService, x: Float, y: Float) {
-        Log.d("AccessibilityService", "click: ($x, $y)")
+//        Log.d("AccessibilityService", "click: ($x, $y)")
         val builder = GestureDescription.Builder()
         val path = Path()
         path.moveTo(x, y)
@@ -166,12 +166,12 @@ class AccessibleComponents : AccessibilityService() {
         accessibilityService.dispatchGesture(gesture, object : GestureResultCallback() {
             override fun onCancelled(gestureDescription: GestureDescription) {
                 super.onCancelled(gestureDescription)
-                Log.d("AccessibilityService", "Gesture Cancelled")
+//                Log.d("AccessibilityService", "Gesture Cancelled")
             }
 
             override fun onCompleted(gestureDescription: GestureDescription) {
                 super.onCompleted(gestureDescription)
-                Log.d("AccessibilityService", "Gesture Completed")
+//                Log.d("AccessibilityService", "Gesture Completed")
             }
         }, null)
     }
