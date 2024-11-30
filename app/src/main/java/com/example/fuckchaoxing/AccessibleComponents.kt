@@ -1,4 +1,4 @@
-package com.example.fuckcaoxing
+package com.example.fuckchaoxing
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
@@ -25,28 +25,25 @@ class AccessibleComponents : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        extractAllTextViews(rootInActiveWindow)
         Log.d("AccessibilityService", "Service Connected")
         val (w, h) = MainActivity.getScreenResolution(this)
         width = w
         height = h
         val info = AccessibilityServiceInfo().apply {
-            eventTypes =
-                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START or AccessibilityEvent.TYPE_TOUCH_INTERACTION_END
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            notificationTimeout = 500
-            flags = AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+            eventTypes = AccessibilityEvent.TYPES_ALL_MASK
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+            notificationTimeout = 100
+            flags =
+                AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
         this.serviceInfo = info
         startPeriodicTask()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        Log.d("AccessibilityService", "Accessibility Event")
     }
 
     override fun onInterrupt() {
-        Log.d("AccessibilityService", "Service Interrupted")
         job?.cancel()
     }
 
@@ -54,14 +51,23 @@ class AccessibleComponents : AccessibilityService() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
             while (isActive) {
-                delay(10000)
-                val rootNode = rootInActiveWindow
-                if (rootNode != null) {
-                    for (i in 1..3) {
-                        extractAllTextViews(rootNode) // get problem
-                        delay(500)
+                delay(8000)
+
+                val windows = this@AccessibleComponents.windows
+                if (windows.isNotEmpty()) {
+                    var rootNode: AccessibilityNodeInfo? = null
+
+                    for (window in windows) {
+                        rootNode = window.root
+                        if (rootNode != null && rootNode.packageName == "com.chaoxing.mobile") {
+                            for (i in 1..5) {
+                                extractAllTextViews(rootNode)
+                                delay(500)
+                            }
+                        }
                     }
                     Log.d("AccessibilityService", "Problem List: $problemList")
+
                     if (problemList.isEmpty()) {
                         Log.d("AccessibilityService", "左右横跳之术!!!")
                         clickAtCoordinates(
@@ -77,6 +83,7 @@ class AccessibleComponents : AccessibilityService() {
                         )
                         continue
                     }
+
                     withContext(Dispatchers.IO) {
                         val answer = MainService.getAnswer(
                             problemList.joinToString(""),
@@ -105,11 +112,12 @@ class AccessibleComponents : AccessibilityService() {
                         Log.d("AccessibilityService", "Problem List Cleared")
                     }
                 } else {
-                    Log.d("AccessibilityService", "Root node is null!")
+                    Log.d("AccessibilityService", "No valid root node found in windows!")
                 }
             }
         }
     }
+
 
     private fun getPositionByText(
         accessibilityService: AccessibilityService,

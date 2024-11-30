@@ -1,4 +1,4 @@
-package com.example.fuckcaoxing.ui.theme
+package com.example.fuckchaoxing.ui.theme
 
 import androidx.compose.material3.darkColorScheme
 

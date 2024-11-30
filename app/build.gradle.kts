@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.fuckcaoxing"
-    compileSdk = 34
+    namespace = "com.example.fuckchaoxing"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.fuckcaoxing"
+        applicationId = "com.example.fuckchaoxing"
         minSdk = 31
         targetSdk = 34
         versionCode = 1
