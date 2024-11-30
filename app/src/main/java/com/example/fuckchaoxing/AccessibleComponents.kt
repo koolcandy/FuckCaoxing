@@ -68,7 +68,15 @@ class AccessibleComponents : AccessibilityService() {
                     }
                     Log.d("AccessibilityService", "Problem List: $problemList")
 
-                    if (problemList.isEmpty()) {
+                    if (problemList.isEmpty() || !problemList.containsAll(
+                            listOf(
+                                "A",
+                                "B",
+                                "C",
+                                "D"
+                            )
+                        )
+                    ) {
                         Log.d("AccessibilityService", "左右横跳之术!!!")
                         clickAtCoordinates(
                             this@AccessibleComponents,
@@ -177,7 +185,7 @@ class AccessibleComponents : AccessibilityService() {
             if (childNode != null) {
                 val className = childNode.className
 
-                if (className == "android.widget.TextView" && !childNode.text.isNullOrEmpty()) {
+                if (className == "android.widget.TextView") {
                     val text = childNode.text.toString()
 
                     val elementsToRemove = listOf(
